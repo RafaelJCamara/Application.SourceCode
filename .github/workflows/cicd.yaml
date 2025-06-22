@@ -35,6 +35,30 @@ jobs:
             ghcr.io/rafaeljcamara/gowebserver:${{ github.sha }}
 
       # 4. Checkout the GitOps repository
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v2
+        with:
+          repository: RafaelJCamara/GitOps.Argo
+          path: gitops-repo
+          token: ${{ secrets.GITOPS_TOKEN }}
+
       # 5. Install Kustomize
-      # 6. Update the Kustomization file with the new image tag
-      # 7. Commit and push the changes to the GitOps repository
+      - name: Install Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          version: "3.6.1"
+
+      # 6. Update the Kustomization file with the new image tag and generate a commit and push
+      - name: Update Kustomization file
+        env:
+          IMAGE_REG: ghcr.io/rafaeljcamara/gowebserver
+          TAG: ${{ github.sha }}
+        run: |
+          cd gitops-repo/gowebserver
+          kustomize edit set image gowebserver=${IMAGE_REG}:${TAG}
+          cd ..
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Update image tag to ${TAG}"
+          git push
