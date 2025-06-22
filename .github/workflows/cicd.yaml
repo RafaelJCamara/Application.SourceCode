@@ -1,0 +1,40 @@
+name: GitOps
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout the application repository
+      - name: Checkout Application Repository
+        uses: actions/checkout@v2
+        with:
+          path: app-repo
+
+      # 2. Authenticate with GitHub Container Registry
+      - name: Authenticate with GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITOPS_TOKEN }}
+
+      # 3. Build and push the Docker image
+      - name: Build and push the Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: app-repo
+          push: true
+          tags: |
+            ghcr.io/rafaeljcamara/gowebserver:latest
+            ghcr.io/rafaeljcamara/gowebserver:${{ github.sha }}
+
+      # 4. Checkout the GitOps repository
+      # 5. Install Kustomize
+      # 6. Update the Kustomization file with the new image tag
+      # 7. Commit and push the changes to the GitOps repository
